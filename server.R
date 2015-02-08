@@ -1,19 +1,9 @@
 library("shiny")
 library("ggplot2")
 
-# Simulation and Shiny Application of Flue Season Dynamics
+# Simulation of SIR model
+# http://en.wikipedia.org/wiki/Compartmental_models_in_epidemiology#The_SIR_model
 shinyServer(function(input, output) {
-  
-  # Hit counter
-  output$counter <- 
-    renderText({
-      if (!file.exists("counter.Rdata")) counter <- 0
-      if (file.exists("counter.Rdata")) load(file="counter.Rdata")
-      counter <- counter + 1
-      
-      save(counter, file="counter.Rdata")     
-      paste0("Hits: ", counter)
-    })
   
   mydata <- reactive({
     # Model Parameters:
@@ -23,77 +13,74 @@ shinyServer(function(input, output) {
     np <- input$np  # Time periods
     
     # Infection Parameters:
-    B <- input$B # Transmition rate
-    C <- input$C # Contact rate.
+    B <- input$B # Transmission rate
+    C <- input$C # Contact rate
     v <- 1/input$V # Recovery rate days
     
     # Model - Dynamic Change
-    DS <- function() -B*C*S*I/N
-    DI <- function() (B*C*S*I/N) - v*I
-    DZ <- function() v*I
+    StoI <- function() B*C*S*I/N
+    ItoR <- function() v*I
+    DS <- function() -StoI()
+    DI <- function() StoI() - ItoR()
+    DR <- function() ItoR()
     
     # Initial populations:
-    Sv <- S <- Sp*N # Sesceptible population
+    Sv <- S <- Sp*N # Susceptible population
     Iv <- I <- Ip*N # Infected
-    Zv <- Z <- 0    # Immune
+    Rv <- R <- 0    # Immune
     
     # Loop through periods
     for (p in 1:np) {
       # Calculate the change values
+      # Must calculate before applying changes to S, I and R
       ds = DS()
       di = DI()
-      dz = DZ()
+      dr = DR()
       
-      # Change the total populations
+      # Update the total populations
       S = S + ds
       I = I + di
-      Z = Z + dz
+      R = R + dr
       
       # Save the changes in vector form
       Sv = c(Sv, S)
       Iv = c(Iv, I)
-      Zv = c(Zv, Z)  
+      Rv = c(Rv, R)  
     }
+    
     # Turn the results into a table
     long <- data.frame(
       Period=rep((1:length(Sv)),3), 
-      Population = c(Sv, Iv, Zv), 
-      Indicator=rep(c("Uninfected", "Infected", "Recovered"), 
+      Population = c(Sv, Iv, Rv), 
+      Indicator=rep(c("Susceptible",
+                      "Infected", 
+                      "Recovered"), 
                     each=length(Sv)))
-    wide <- cbind(Sv, Iv, Zv)
-      
+    wide <- cbind(Sv, Iv, Rv)
+    
     list(long=long, wide=wide)
     
-    })
+  })
   
-  output$datatable <- renderTable(mydata()[["wide"]])
-    
   output$graph1 <- renderPlot({
     p <- ggplot(mydata()[["long"]], 
-         aes(x=Period, y=Population, group=Indicator))    
-    p <- p + geom_line(aes(colour = Indicator), size=1.5) + 
-         ggtitle("Population Totals")
+                aes(x=Period, 
+                    y=Population, 
+                    group=Indicator))    
+    
+    p <- p  + 
+      geom_line(aes(colour = Indicator), size=1.5) +  
+      ggtitle("Population Totals")
     print(p)
   })
   
-  output$graph2 <- renderPlot({
-    data2 <- mydata()[["wide"]]
-        
-    change <- data2[-1,]-data2[-nrow(data2),]
-    
-    long <- data.frame(
-      Period=rep((1:nrow(change)),3), 
-      Population = c(change[,1], change[,2], change[,3]), 
-      Indicator=rep(c("Uninfected", "Infected", "Recovered"), 
-                    each=nrow(change)))
-    
-    p <- ggplot(long, 
-                aes(x=Period, y=Population, group=Indicator))    
-    p <- p + geom_line(aes(colour = Indicator), size=1.5) + 
-      ggtitle("Change in Population")
-    print(p)
-  })
-  
-  
+  output$datatable <- renderTable(mydata()[["wide"]])
+
+  output$downloadData <- downloadHandler(
+    filename = function() { 'SIR.csv'},
+    content = function(file) {
+      write.csv(mydata()[["wide"]], file)
+    }
+  )
+
 })
-  
