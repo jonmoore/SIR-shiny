@@ -1,9 +1,49 @@
-library("shiny")
+library(shiny)
 library("ggplot2")
 
 # Simulation of SIR model
 # http://en.wikipedia.org/wiki/Compartmental_models_in_epidemiology#The_SIR_model
-shinyServer(function(input, output) {
+
+ui <-   navbarPage(
+  "SIR model simulation",
+  tabPanel(
+    "Plots",
+    sidebarLayout(
+      sidebarPanel(
+        h3("Parameters"),
+        sliderInput("N", "Total Population:", min=0, max=1000, value=100, step=100),
+        sliderInput("Ip", "Initial proportion infected:", min=0, max=1, value=0.1, step=0.01),
+        sliderInput("B", "Transmission rate:", min=0, max=1, value=0.5, step=0.1),
+        sliderInput("C", "Contact rate:", min=0, max=1, value=0.5, step=0.1),
+        sliderInput("V", "Days to recover:", min=2, max=20, value=7, step=1),
+        sliderInput("np", "Time periods:", min=10, max=200, value=100, step=10),
+        
+        p()
+      ),
+      mainPanel (
+        plotOutput("graph1")
+        
+      )
+    )
+  )
+  ,
+  tabPanel(
+    "Numerical results & download",
+    sidebarLayout(
+      sidebarPanel(
+        h3("tables"),
+        downloadButton('downloadData', 'Download')
+        
+      ),
+      mainPanel(
+        tableOutput("datatable")
+      )
+    )
+  )
+)
+
+
+server <- function(input, output) {
   
   mydata <- reactive({
     # Model Parameters:
@@ -75,12 +115,14 @@ shinyServer(function(input, output) {
   })
   
   output$datatable <- renderTable(mydata()[["wide"]])
-
+  
   output$downloadData <- downloadHandler(
     filename = function() { 'SIR.csv'},
     content = function(file) {
       write.csv(mydata()[["wide"]], file)
     }
   )
+  
+}
 
-})
+shinyApp(ui = ui, server = server)

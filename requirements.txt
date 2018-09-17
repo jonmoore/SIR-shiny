@@ -1,0 +1,3 @@
+plyr
+ggplot2
+rmarkdown
