@@ -13,6 +13,7 @@ ui <-   navbarPage(
         h3("Parameters"),
         sliderInput("N", "Total Population:", min=0, max=1000, value=100, step=100),
         sliderInput("Ip", "Initial proportion infected:", min=0, max=1, value=0.1, step=0.01),
+        sliderInput("Rp", "Initial proportion recovered:", min=0, max=1, value=0.1, step=0.01),
         sliderInput("B", "Transmission rate:", min=0, max=1, value=0.5, step=0.1),
         sliderInput("C", "Contact rate:", min=0, max=1, value=0.5, step=0.1),
         sliderInput("V", "Days to recover:", min=2, max=20, value=7, step=1),
@@ -47,8 +48,9 @@ server <- function(input, output) {
   
   mydata <- reactive({
     # Model Parameters:
+    Sp <- 1-Ip-Rp   # Proportion Susceptible
     Ip <- input$Ip  # Proportion Infected
-    Sp <- 1-Ip      # Proportion Susceptible
+    Rp <- input$Rp  # Proportion Recovered
     N  <- input$N   # Total Population
     np <- input$np  # Time periods
     
@@ -67,7 +69,7 @@ server <- function(input, output) {
     # Initial populations:
     Sv <- S <- Sp*N # Susceptible population
     Iv <- I <- Ip*N # Infected
-    Rv <- R <- 0    # Immune
+    Rv <- R <- Rp*N # Recovered
     
     # Loop through periods
     for (p in 1:np) {
