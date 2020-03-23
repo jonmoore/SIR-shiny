@@ -11,12 +11,12 @@ ui <-   navbarPage(
     sidebarLayout(
       sidebarPanel(
         h3("Parameters"),
-        sliderInput("N", "Total Population:", min=0, max=1000, value=100, step=100),
-        sliderInput("Ip", "Initial proportion infected:", min=0, max=1, value=0.1, step=0.01),
-        sliderInput("Rp", "Initial proportion recovered:", min=0, max=1, value=0.1, step=0.01),
-        sliderInput("B", "Transmission rate:", min=0, max=1, value=0.5, step=0.1),
-        sliderInput("C", "Contact rate:", min=0, max=1, value=0.5, step=0.1),
-        sliderInput("V", "Days to recover:", min=2, max=20, value=7, step=1),
+        sliderInput("N",  "Total Population:", min=0, max=1000, value=100, step=100),
+        sliderInput("Ip", "Initial proportion infected:", min=0, max=1, value=0.01, step=0.01),
+        sliderInput("Rp", "Initial proportion recovered:", min=0, max=1, value=0.0, step=0.01),
+        sliderInput("B",  "Transmission rate:", min=0, max=1, value=0.5, step=0.1),
+        sliderInput("C",  "Contact rate:", min=0, max=1, value=0.5, step=0.1),
+        sliderInput("V",  "Days to recover:", min=2, max=20, value=10, step=0.5),
         sliderInput("np", "Time periods:", min=10, max=200, value=100, step=10),
         
         p()
@@ -48,7 +48,7 @@ server <- function(input, output) {
   
   mydata <- reactive({
     # Model Parameters:
-    Sp <- 1-Ip-Rp   # Proportion Susceptible
+    Sp <- 1-input$Ip-input$Rp   # Proportion Susceptible
     Ip <- input$Ip  # Proportion Infected
     Rp <- input$Rp  # Proportion Recovered
     N  <- input$N   # Total Population

@@ -1,0 +1,10 @@
+name: sir-shiny
+title:
+username:
+account: jonmoore
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 31396
+bundleId: 2910700
+url: https://jonmoore.shinyapps.io/SIR-shiny/
+when: 1584924864.27954
